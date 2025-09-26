@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Hankyoreh Test</title>
+    <link>https://www.hani.co.kr</link>
+    <item>
+      <title><![CDATA[ 김혜경 여사 “한식 인기 많아…코리아타운 보고 실감” ]]></title>
+      <description><![CDATA[
+        <table border='0px' cellpadding='0px' cellspacing='0px' width='107px'>
+          <tr><td bgcolor='#DDDDDD' style='padding: 1px;'>
+            <table border='0px' cellpadding='0px' cellspacing='0px' width='105px' height='84px'>
+              <tr><td bgcolor='#FFFFFF' style='padding: 3px;' align=center>
+                <img src=https://flexible.img.hani.co.kr/flexible/normal/300/180/imgdb/child/2025/0926/53_17588372782852_20250926500048.webp border=0>
+              </td></tr>
+            </table>
+          </td><td width='13px' nowrap></td></tr>
+        </table> ]]>
+      </description>
+      <link>https://www.hani.co.kr/arti/politics/bluehouse/1220809.html</link>
+      <guid isPermaLink="false">1220809</guid>
+      <dc:subject>김혜경 여사 “한식 인기 많아…코리아타운 보고 실감”</dc:subject>
+      <dc:category>정치</dc:category>
+    </item>
+  </channel>
+</rss>

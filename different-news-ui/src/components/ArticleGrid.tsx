@@ -1,62 +1,60 @@
-// src/components/ArticleGrid.tsx
-
-// Article 타입 정의 (url은 Card에서만 필요하므로 여기선 생략)
-interface Article {
-  id: number;
-  source: string;
-  title: string;
-  url: string;
-}
+import { useEffect, useMemo, useState } from "react";
+import type { Article } from "../types";
+import ArticleCard from "./ArticleCard";
+import Pagination from "./Pagination";
 
 interface ArticleGridProps {
-  title: string;
-  articles: Article[];
+  side: "진보" | "보수";
+  featuredArticle?: Article;
+  regularArticles: Article[];
 }
 
-const ArticleGrid = ({ title, articles }: ArticleGridProps) => {
-  if (articles.length === 0) {
-    return (
-      <div className="article-column">
-        <h2>{title}</h2>
-        <p>관련 기사가 없습니다.</p>
-      </div>
-    );
-  }
+const ARTICLES_PER_PAGE = 3;
 
-  // 기사 목록에서 레이아웃에 사용할 기사들을 분리합니다.
-  const mainArticle = articles[0]; // 썸네일 아래에 위치할 기사
-  const subArticles = articles.slice(1, 4); // 오른쪽에 위치할 기사 3개
+const ArticleGrid = ({ side, featuredArticle, regularArticles }: ArticleGridProps) => {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [regularArticles.length]);
+
+  const { paginatedArticles, totalPages } = useMemo(() => {
+    const total = Math.ceil(regularArticles.length / ARTICLES_PER_PAGE);
+    const startIndex = (currentPage - 1) * ARTICLES_PER_PAGE;
+    const sliced = regularArticles.slice(startIndex, startIndex + ARTICLES_PER_PAGE);
+    return {
+      paginatedArticles: sliced,
+      totalPages: total,
+    };
+  }, [currentPage, regularArticles]);
+
+  const totalCount = regularArticles.length + (featuredArticle ? 1 : 0);
+  const hasRegularArticles = regularArticles.length > 0;
+
+  const handlePageChange = (page: number) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div className="article-column">
-      <h2>{title}</h2>
-      <div className="super-card">
-        {/* 1. 대표 썸네일 */}
-        <div className="super-card-thumbnail">[ 대표 썸네일 ]</div>
+      <h2>
+        {side}
+        <small>총 {totalCount}개</small>
+      </h2>
+      <div className="article-list-wrapper">
+        {featuredArticle && <ArticleCard article={featuredArticle} isFeatured />}
 
-        {/* 2. 썸네일 아래 기사 */}
-        {mainArticle && (
-          <a href={mainArticle.url} target="_blank" rel="noopener noreferrer" className="main-article-link">
-            <h3>{mainArticle.title}</h3>
-            <span>{mainArticle.source}</span>
-          </a>
-        )}
-
-        {/* 3. 오른쪽 기사 목록 */}
-        <div className="sub-article-list">
-          {subArticles.map((article) => (
-            <a
-              key={article.id}
-              href={article.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="sub-article-link"
-            >
-              <h4>{article.title}</h4>
-              <span>{article.source}</span>
-            </a>
-          ))}
+        <div className="regular-article-list">
+          {hasRegularArticles ? (
+            paginatedArticles.map((article) => <ArticleCard key={article.id} article={article} />)
+          ) : (
+            <p className="article-empty-message">추가 기사가 아직 준비되지 않았습니다.</p>
+          )}
         </div>
+
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       </div>
     </div>
   );

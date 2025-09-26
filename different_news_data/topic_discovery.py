@@ -15,11 +15,15 @@ from konlpy.tag import Okt
 # --- 설정 ---
 MODEL_NAME = "intfloat/multilingual-e5-base"
 MIN_CLUSTER_SIZE = 10
+N_INITIAL_CANDIDATES = 20  # 중복 제거를 수행할 초기 후보 토픽 수
+MAX_FINAL_TOPICS = 7       # 최종적으로 선택할 최대 토픽 수
+DEDUPLICATION_THRESHOLD = 0.90 # 토픽을 중복으로 판단할 코사인 유사도 임계값
+
 TOPIC_WORD_BLACKLIST = { "정부", "대통령실", "민주당", "국민의힘", "국회", "여야", "의혹",
                          "논란", "관계자", "발표", "사진", "속보", "단독", "오늘", "내일", 
                          "관련", "이슈", "사실", "생각", "한국", "우리", "중앙", "일보", 
                          "뉴스", "기사", "언론", "보도", "기자", "취재", "전문가", "전문가들",
-                         "하이라이트", "정치", "경제", "사회", "문화"}
+                         "하이라이트", "정치", "경제", "사회", "문화", "운세"}
 # --- RSS 피드 정보 ---
 Side = str
 @dataclass
@@ -99,7 +103,46 @@ def extract_topic_keyword_and_desc(titles: List[str]) -> Optional[Tuple[str, str
     sub_desc_keywords = [kw for kw, count in most_common[1:4]]
     sub_description = ", ".join(sub_desc_keywords)
     return core_keyword, sub_description
-# ...
+
+def deduplicate_topics(topic_candidates: List[Dict]) -> List[Dict]:
+    """
+    주어진 토픽 후보 목록에서 중복된 토픽을 제거합니다.
+    - 각 토픽의 키워드를 임베딩하여 벡터로 변환합니다.
+    - 코사인 유사도를 계산하여 임계값 이상인 경우 중복으로 간주합니다.
+    - 중복된 토픽 중에서는 점수(_score)가 가장 높은 토픽 하나만 남깁니다.
+    """
+    if len(topic_candidates) < 2:
+        return topic_candidates
+
+    # 각 토픽의 대표 텍스트 생성 (키워드 조합)
+    topic_texts = [f"{t['core_keyword']} {t['sub_description']}" for t in topic_candidates]
+    
+    # 대표 텍스트를 임베딩
+    print("- 토픽 키워드 임베딩 중...")
+    topic_embeds = embed_texts(topic_texts)
+
+    # 코사인 유사도 계산
+    print("- 유사도 계산 및 중복 제거 중...")
+    similarity_matrix = cosine_similarity(topic_embeds)
+
+    # 중복되지 않은 토픽만 남기기
+    unique_candidates = []
+    is_duplicate = [False] * len(topic_candidates)
+
+    # 이미 점수 순으로 정렬되어 있으므로, 앞쪽 토픽이 항상 점수가 높거나 같음
+    for i in range(len(topic_candidates)):
+        if is_duplicate[i]:
+            continue
+        # 자기 자신은 유니크 후보에 추가
+        unique_candidates.append(topic_candidates[i])
+        # 나머지 토픽들과 유사도 비교
+        for j in range(i + 1, len(topic_candidates)):
+            if not is_duplicate[j] and similarity_matrix[i][j] > DEDUPLICATION_THRESHOLD:
+                # 임계값을 넘으면 중복으로 처리 (점수가 낮은 쪽)
+                is_duplicate[j] = True
+                print(f"  - 중복 발견: '{topic_candidates[i]['core_keyword']}' > '{topic_candidates[j]['core_keyword']}' (유사도: {similarity_matrix[i][j]:.2f}) - 점수가 낮은 토픽을 제거합니다.")
+
+    return unique_candidates
 
 def main():
     # 1. RSS 수집 및 가중치 적용 임베딩
@@ -123,7 +166,7 @@ def main():
     for i, label in enumerate(labels):
         clusters[label].append(i)
 
-    # 3. [수정] 후보 생성 및 점수 계산을 하나의 반복문으로 통합
+    # 3. 후보 생성 및 점수 계산
     topic_candidates = []
     centroids_map = {i: np.mean(article_embeds[idxs], axis=0) for i, idxs in clusters.items() if len(idxs) > 0}
 
@@ -162,13 +205,20 @@ def main():
             "sample_titles": [a.title for a in group_articles[:5]],
         })
 
-    # 4. 점수 내림차순 정렬 후 상위 10개 선택
+    # 4. 점수 기반 정렬 및 초기 후보 선택
     topic_candidates.sort(key=lambda t: t["_score"], reverse=True)
-    top_ten_candidates = topic_candidates[:10]
+    initial_candidates = topic_candidates[:N_INITIAL_CANDIDATES]
 
-    # 5. 최종 결과물 정리
+    # 5. 중복 제거
+    print(f"\n🔄 {len(initial_candidates)}개의 초기 후보에 대해 중복 제거를 시작합니다...")
+    deduplicated_candidates = deduplicate_topics(initial_candidates)
+
+    # 6. 최종 토픽 선택
+    final_candidates = deduplicated_candidates[:MAX_FINAL_TOPICS]
+
+    # 7. 최종 결과물 정리
     final_results = []
-    for cand in top_ten_candidates:
+    for cand in final_candidates:
         # DB에 넣을 깔끔한 데이터만 남깁니다.
         final_results.append({
             "core_keyword": cand["core_keyword"],
@@ -177,7 +227,7 @@ def main():
             "sample_titles": cand["sample_titles"],
         })
 
-    print(f"\n✅ 점수 기반 상위 {len(final_results)}개 토픽을 선발했습니다.")
+    print(f"\n✅ 중복 제거 후 {len(final_results)}개의 최종 토픽을 선발했습니다.")
     with open("suggested_topics.json", "w", encoding="utf-8") as f:
         json.dump(final_results, f, ensure_ascii=False, indent=2)
     print("\n🎉 모든 작업 완료! 'suggested_topics.json' 파일이 생성되었습니다.")

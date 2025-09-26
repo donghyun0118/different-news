@@ -8,7 +8,7 @@ router.get("/topics", async (req: Request, res: Response) => {
   try {
     // [수정] core_keyword 대신 display_name을 선택합니다.
     const [rows] = await pool.query(
-      "SELECT id, display_name, published_at FROM topics WHERE status = 'published' ORDER BY published_at DESC"
+      "SELECT id, display_name, summary, published_at FROM topics WHERE status = 'published' ORDER BY published_at DESC"
     );
     res.json(rows);
   } catch (error) {
@@ -23,12 +23,13 @@ router.get("/topics/:topicId", async (req: Request, res: Response) => {
   try {
     // [수정] 필요한 컬럼(display_name, summary 등)만 명시적으로 선택합니다.
     const [topicRows]: any = await pool.query(
-      "SELECT id, display_name, summary, published_at FROM topics WHERE id = ?",
+      "SELECT id, display_name, summary, published_at FROM topics WHERE id = ? AND status = 'published'",
       [topicId]
     );
-    const [articleRows] = await pool.query("SELECT * FROM articles WHERE topic_id = ? AND status = 'published'", [
-      topicId,
-    ]);
+    const [articleRows] = await pool.query(
+      "SELECT id, source, source_domain, side, title, url, published_at, is_featured, thumbnail_url FROM articles WHERE topic_id = ? AND status = 'published' ORDER BY `display_order` ASC",
+      [topicId]
+    );
 
     if (topicRows.length === 0) {
       return res.status(404).json({ message: "Topic not found" });

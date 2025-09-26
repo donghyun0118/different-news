@@ -1,13 +1,19 @@
 import json
+import os
 import mysql.connector
+from dotenv import load_dotenv
 from mysql.connector import errorcode
+
+# .env 파일의 절대 경로를 계산하여 로드
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+load_dotenv(dotenv_path=dotenv_path)
 
 # --- DB 접속 정보 ---
 DB_CONFIG = {
-    'user': 'root',
-    'password': '3302', # 본인의 DB 비밀번호로 변경
-    'host': '127.0.0.1',
-    'database': 'different_news'
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'host': os.getenv('DB_HOST'),
+    'database': os.getenv('DB_DATABASE')
 }
 
 def insert_topics_from_json(file_path='suggested_topics.json'):
