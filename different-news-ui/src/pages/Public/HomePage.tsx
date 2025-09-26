@@ -1,7 +1,7 @@
 // src/App.tsx
 
-import "../App.css";
-import TopicList from "../components/TopicList";
+import "../../App.css";
+import TopicList from "../../components/TopicList";
 
 function App() {
   return (

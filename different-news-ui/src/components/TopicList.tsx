@@ -1,28 +1,23 @@
 // src/components/TopicList.tsx
 
-import axios from "axios";
 import { useEffect, useState } from "react";
+import { fetchPublishedTopics } from "../api";
+import type { Topic } from "../types"; // Topic 타입을 불러옵니다.
 import TopicCard from "./TopicCard"; // 방금 만든 TopicCard를 불러옵니다.
-
-// Topic 데이터의 타입을 정의합니다.
-interface Topic {
-  id: number;
-  display_name: string;
-}
 
 const TopicList = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
 
   useEffect(() => {
-    const fetchTopics = async () => {
+    const loadTopics = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/topics");
-        setTopics(response.data);
+        const data = await fetchPublishedTopics();
+        setTopics(data);
       } catch (error) {
         console.error("Error fetching topics:", error);
       }
     };
-    fetchTopics();
+    loadTopics();
   }, []);
 
   return (
