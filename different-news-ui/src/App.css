@@ -77,6 +77,10 @@ hr.divider {
 /* =========================================
    3. 헤더 및 버튼 (Headers & Buttons)
    ========================================= */
+.app-header {
+  position: relative;
+}
+
 .app-header h1 {
   font-size: 2.5rem;
   font-weight: 800;
@@ -391,7 +395,7 @@ hr.divider {
 
 .featured-thumbnail {
   width: 140px; /* 썸네일 너비 고정 */
-  height: 85px; /* 썸네일 높이 고정 */
+  height: 100px; /* 썸네일 높이 고정 */
   flex-shrink: 0; /* 썸네일이 찌그러지지 않도록 설정 */
   position: relative;
   background-color: var(--bg-light);
@@ -488,7 +492,11 @@ hr.divider {
 }
 
 .admin-back-row {
-  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .back-link {
@@ -580,7 +588,6 @@ hr.divider {
 .admin-section-actions .create-new-topic-btn {
   white-space: nowrap;
 }
-
 
 .admin-section-subtitle {
   margin: 6px 0 0 0;
@@ -980,4 +987,65 @@ a.topic-card-link {
 .pagination-dot.active {
   background-color: var(--primary-blue);
   transform: scale(1.2);
+}
+.logout-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.logout-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  filter: brightness(1.05);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+  filter: brightness(0.95);
+}
+
+/* =========================================
+   9. Authentication Styles
+   ========================================= */
+
+.auth-links {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--primary-blue);
+  border-radius: var(--border-radius);
+  background-color: transparent;
+  color: var(--primary-blue);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-speed) ease;
+  cursor: pointer;
+}
+
+.auth-btn:hover {
+  background-color: var(--primary-blue);
+  color: white;
+}
+
+.welcome-message {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }

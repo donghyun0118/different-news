@@ -5,6 +5,7 @@ import pool from "./config/db";
 import { specs } from "./config/swagger";
 import adminRouter from "./routes/admin";
 import apiRouter from "./routes/api";
+import userRouter from "./routes/user";
 
 const app = express();
 const port = 3000;
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 app.use("/api", apiRouter);
 app.use("/admin", adminRouter);
+app.use("/user", userRouter);
 
 // 기본 경로
 app.get("/", (req: Request, res: Response) => {

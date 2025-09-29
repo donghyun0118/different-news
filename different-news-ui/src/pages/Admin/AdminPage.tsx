@@ -1,9 +1,10 @@
-﻿import axios from "axios";
+import axios from "axios";
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Topic } from "../../types";
+import { useAdminAuth } from "../../context/AdminAuthContext";
 
-const formatDate = (value?: string | null) => {
+const formatPublishedAt = (value?: string | null) => {
   if (!value) {
     return "";
   }
@@ -11,37 +12,47 @@ const formatDate = (value?: string | null) => {
   if (Number.isNaN(date.getTime())) {
     return "";
   }
+  const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return `${date.getFullYear()}.${month}.${day}`;
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}.${month}.${day} ${hours}:${minutes}`;
 };
 
-const TOPIC_PROMPT = "현재 대한민국에서 가장 인기있는 토픽 5개랑, 각 토픽에 대한 단어형 키워드3~5개랑, 중도의 입장에서의 요약 적어줘.";
+const TOPIC_PROMPT = "현재 대한민국에서 가장 인기있는 토픽 5개와 각 토픽에 대한 단어형 키워드 3~5개, 중도 입장에서의 요약을 작성해줘.";
 
 export default function AdminPage() {
   const [suggestedTopics, setSuggestedTopics] = useState<Topic[]>([]);
   const [publishedTopics, setPublishedTopics] = useState<Topic[]>([]);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAdminAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/admin/login", { replace: true });
+  };
 
   const handleCopyPrompt = async () => {
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
+      if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(TOPIC_PROMPT);
       } else {
-        const textarea = document.createElement('textarea');
+        const textarea = document.createElement("textarea");
         textarea.value = TOPIC_PROMPT;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
         document.body.appendChild(textarea);
         textarea.focus();
         textarea.select();
-        document.execCommand('copy');
+        document.execCommand("copy");
         document.body.removeChild(textarea);
       }
-      alert('프롬프트를 클립보드에 복사했습니다.');
+      alert("프롬프트를 클립보드에 복사했습니다.");
     } catch (error) {
-      console.error('Failed to copy prompt', error);
-      alert('복사에 실패했습니다. 직접 선택해서 복사해주세요.');
+      console.error("Failed to copy prompt", error);
+      alert("복사에 실패했습니다. 브라우저 설정을 확인해 주세요.");
     }
   };
 
@@ -54,7 +65,7 @@ export default function AdminPage() {
       setSuggestedTopics(suggestedRes.data);
       setPublishedTopics(publishedRes.data);
     } catch (error) {
-      console.error("토픽 목록을 불러오는 중 오류가 발생했습니다.", error);
+      console.error("토픽 데이터를 불러오는 중 오류가 발생했습니다.", error);
     }
   };
 
@@ -82,17 +93,20 @@ export default function AdminPage() {
         <Link to="/" className="back-link">
           ← 홈으로 돌아가기
         </Link>
+        <button type="button" className="logout-btn" onClick={handleLogout}>
+          로그아웃
+        </button>
       </div>
 
       <section className="admin-hero">
         <div className="admin-hero-text">
-          <h1>관리자 대시보드</h1>
-          <p>승인 대기 중인 토픽을 검토하고 발행된 토픽을 관리하세요.</p>
+          <h1>관리자 센터</h1>
+          <p>추천된 토픽을 빠르게 검토하고 필요한 작업을 진행하세요.</p>
         </div>
 
         <div className="admin-metrics">
           <div className="admin-metric-card">
-            <span className="metric-label">승인 대기</span>
+            <span className="metric-label">후보 토픽</span>
             <span className="metric-value">{suggestedCount}</span>
           </div>
           <div className="admin-metric-card">
@@ -105,16 +119,16 @@ export default function AdminPage() {
       <section className="admin-section">
         <div className="admin-section-header">
           <div>
-                        <h2>승인 대기 토픽</h2>
-                        <p className="admin-section-subtitle">토픽을 검토해 발행하거나 거절해 주세요.</p>
+            <h2>후보 토픽 목록</h2>
+            <p className="admin-section-subtitle">AI가 추천한 토픽을 검토하거나 거절할 수 있습니다.</p>
           </div>
           <div className="admin-section-actions">
             <button type="button" onClick={handleCopyPrompt} className="create-new-topic-btn">
               프롬프트 복사
             </button>
-          <Link to="/admin/topics/new" className="create-new-topic-btn">
-            + 토픽 직접 생성
-          </Link>
+            <Link to="/admin/topics/new" className="create-new-topic-btn">
+              + 토픽 직접 생성
+            </Link>
           </div>
         </div>
 
@@ -124,11 +138,11 @@ export default function AdminPage() {
               <article key={topic.id} className="topic-approval-item admin-topic-card">
                 <div className="topic-info">
                   <h3>{topic.core_keyword}</h3>
-                  <p>{topic.sub_description || "설명 정보가 없습니다."}</p>
+                  <p>{topic.sub_description || "추가 설명이 등록되지 않았습니다."}</p>
                 </div>
                 <div className="topic-actions">
                   <Link to={`/admin/topics/${topic.id}/edit`} className="edit-btn-link">
-                    검토 후 발행
+                    상세 검토
                   </Link>
                   <button type="button" onClick={() => handleReject(topic.id)} className="reject-btn">
                     거절
@@ -139,8 +153,8 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="admin-empty-state">
-            <h3>승인 대기 토픽이 없습니다</h3>
-            <p>새로운 제안이 들어오면 이곳에 표시됩니다.</p>
+            <h3>후보 토픽이 없습니다</h3>
+            <p>새로운 추천이 도착하면 이곳에 표시됩니다.</p>
           </div>
         )}
       </section>
@@ -149,7 +163,7 @@ export default function AdminPage() {
         <div className="admin-section-header">
           <div>
             <h2>발행된 토픽</h2>
-            <p className="admin-section-subtitle">큐레이션 페이지로 이동해 최신 기사를 유지하세요.</p>
+            <p className="admin-section-subtitle">큐레이션 페이지로 이동해 기사 상태를 조정할 수 있습니다.</p>
           </div>
         </div>
 
@@ -160,12 +174,12 @@ export default function AdminPage() {
                 <div className="topic-info">
                   <h3>{topic.display_name || topic.core_keyword}</h3>
                   <p className="topic-meta">
-                    {topic.published_at ? `${formatDate(topic.published_at)} 발행` : "발행됨"}
+                    {topic.published_at ? `${formatPublishedAt(topic.published_at)} 발행` : "발행일 미정"}
                   </p>
                 </div>
                 <div className="topic-actions">
                   <Link to={`/admin/topics/${topic.id}`} className="edit-btn-link curation-btn">
-                    큐레이션 열기
+                    큐레이션 관리
                   </Link>
                 </div>
               </article>
@@ -173,8 +187,8 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="admin-empty-state">
-            <h3>아직 발행된 토픽이 없습니다</h3>
-            <p>토픽을 발행하면 이곳에서 바로 관리할 수 있습니다.</p>
+            <h3>발행된 토픽이 없습니다</h3>
+            <p>토픽을 발행하면 이곳에서 관리할 수 있습니다.</p>
           </div>
         )}
       </section>

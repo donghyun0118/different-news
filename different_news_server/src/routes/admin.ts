@@ -2,6 +2,7 @@ import { exec } from "child_process";
 import { Request, Response, Router } from "express";
 import path from "path";
 import pool from "../config/db";
+import { authenticateAdmin, handleAdminLogin } from "../middleware/auth";
 
 const router = Router();
 
@@ -9,6 +10,10 @@ const router = Router();
 router.get("/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
+
+router.post("/login", handleAdminLogin);
+
+router.use(authenticateAdmin);
 
 // [추가] '제안됨' 상태의 토픽 후보 목록 조회 API
 router.get("/topics/suggested", async (req: Request, res: Response) => {
@@ -25,7 +30,7 @@ router.get("/topics/suggested", async (req: Request, res: Response) => {
 router.get("/topics/published", async (req: Request, res: Response) => {
   try {
     const [rows] = await pool.query(
-      "SELECT id, display_name FROM topics WHERE status = 'published' ORDER BY published_at DESC"
+      "SELECT id, display_name, published_at FROM topics WHERE status = 'published' ORDER BY published_at DESC"
     );
     res.json(rows);
   } catch (error) {

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ArticleGrid from "../../components/ArticleGrid";
 import Sidebar from "../../components/Sidebar";
+import Comments from "../../components/Comments";
 import type { Article, Topic } from "../../types";
 
 const formatDate = (value?: string | null) => {
@@ -146,8 +147,7 @@ const TopicDetailPage = () => {
       </div>
 
       <section className="comments-section">
-        <h2>댓글</h2>
-        <p className="comments-placeholder">댓글 기능이 곧 제공될 예정입니다.</p>
+        {topicId && <Comments topicId={topicId} />}
       </section>
     </div>
   );
