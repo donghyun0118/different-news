@@ -2,8 +2,8 @@
 import axios from "axios";
 import type { Article, Topic } from "../types";
 
-// API 서버의 기본 주소를 설정합니다.
-const apiClient = axios.create({
+// API ?�버??기본 주소�??�정?�니??
+export const apiClient = axios.create({
   baseURL: "http://localhost:3000",
 });
 
@@ -19,7 +19,7 @@ export const fetchTopicDetails = async (topicId: string): Promise<{ topic: Topic
   return response.data;
 };
 
-// --- 관리자용 API ---
+// --- 관리자??API ---
 
 // GET /admin/topics/suggested
 export const fetchSuggestedTopics = async (): Promise<Topic[]> => {
@@ -27,4 +27,5 @@ export const fetchSuggestedTopics = async (): Promise<Topic[]> => {
   return response.data;
 };
 
-// ... (이후 다른 모든 API 호출 함수들을 여기에 추가합니다)
+// ... (?�후 ?�른 모든 API ?�출 ?�수?�을 ?�기??추�??�니??
+
